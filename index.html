@@ -1,95 +1,202 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>CUET PG Score Calculator</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      background-color: #f5f5f5;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-    }
-    #result {
-      margin-top: 1rem;
-      background: #e0ffe0;
-      padding: 1rem;
-      border-radius: 8px;
-    }
-  </style>
-</head>
-<body>
-<div class="container">
-  <h1>CUET PG Score Calculator</h1>
-  <input type="file" id="fileInput" accept=".csv">
-  <button onclick="processFile()">Calculate Score</button>
-  <div id="result"></div>
-</div>
-
-<script>
-  function processFile() {
-    const fileInput = document.getElementById('fileInput');
-    const resultDiv = document.getElementById('result');
-
-    if (!fileInput.files.length) {
-      alert('Please upload a CSV file first.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const lines = e.target.result.split('\n').map(line => line.trim());
-      const headers = lines[0].split(',');
-
-      const qIndex = headers.indexOf('QuestionID');
-      const cIndex = headers.indexOf('CorrectAnswer');
-      const yIndex = headers.indexOf('YourAnswer');
-
-      if (qIndex === -1 || cIndex === -1 || yIndex === -1) {
-        resultDiv.innerHTML = '<p style="color:red">Invalid CSV format. Columns required: QuestionID, CorrectAnswer, YourAnswer</p>';
-        return;
-      }
-
-      let correct = 0, incorrect = 0, unattempted = 0;
-
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i]) continue;
-        const row = lines[i].split(',');
-        const correctAns = row[cIndex].trim();
-        const yourAns = row[yIndex].trim();
-
-        if (!yourAns) {
-          unattempted++;
-        } else if (yourAns === correctAns) {
-          correct++;
-        } else {
-          incorrect++;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hostel Mess Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#eef2ff',
+                100: '#e0e7ff',
+                500: '#6366f1',
+                600: '#4f46e5',
+                700: '#4338ca'
+              }
+            },
+            boxShadow: {
+              soft: '0 10px 30px rgba(15, 23, 42, 0.08)'
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-6px)' }
+              },
+              pulseBorder: {
+                '0%, 100%': { boxShadow: '0 0 0 0 rgba(99,102,241,.45)' },
+                '70%': { boxShadow: '0 0 0 16px rgba(99,102,241,0)' }
+              }
+            },
+            animation: {
+              float: 'float 3s ease-in-out infinite',
+              pulseBorder: 'pulseBorder 2.2s infinite'
+            }
+          }
         }
+      };
+    </script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body class="bg-slate-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useMemo, useState } = React;
+
+      const statusCards = [
+        { label: 'Meal Approved', color: 'bg-emerald-500', sub: 'Lunch slot is active', icon: '✅' },
+        { label: 'Payment Pending', color: 'bg-rose-500', sub: 'Please clear due amount', icon: '⚠️' },
+        { label: 'Food Taken on Credit', color: 'bg-amber-500', sub: '2 meals marked on credit', icon: '🧾' }
+      ];
+
+      const quickActions = [
+        { title: 'Make Payment', desc: 'Pay ₹1,250 due instantly', icon: '💳' },
+        { title: 'Attendance Summary', desc: 'View monthly meal attendance', icon: '📊' },
+        { title: 'Balance Status', desc: 'Check wallet and dues', icon: '👛' }
+      ];
+
+      const attendanceHistory = [
+        { date: '12 May 2026', meal: 'Breakfast', status: 'Present' },
+        { date: '12 May 2026', meal: 'Lunch', status: 'Present' },
+        { date: '11 May 2026', meal: 'Dinner', status: 'Missed' },
+        { date: '11 May 2026', meal: 'Lunch', status: 'Present' }
+      ];
+
+      const paymentHistory = [
+        { date: '10 May 2026', amount: '₹2,500', method: 'UPI', status: 'Success' },
+        { date: '02 May 2026', amount: '₹1,000', method: 'Card', status: 'Success' },
+        { date: '25 Apr 2026', amount: '₹800', method: 'Credit', status: 'Pending' }
+      ];
+
+      function App() {
+        const [scanState, setScanState] = useState(statusCards[0]);
+
+        const cycleState = () => {
+          const currentIndex = statusCards.findIndex((s) => s.label === scanState.label);
+          const nextIndex = (currentIndex + 1) % statusCards.length;
+          setScanState(statusCards[nextIndex]);
+        };
+
+        const greeting = useMemo(() => {
+          const hour = new Date().getHours();
+          if (hour < 12) return 'Good Morning';
+          if (hour < 17) return 'Good Afternoon';
+          return 'Good Evening';
+        }, []);
+
+        return (
+          <main className="min-h-screen px-4 py-4 sm:px-6 flex justify-center">
+            <section className="w-full max-w-md space-y-4">
+              <header className="bg-white rounded-2xl shadow-soft px-4 py-3 flex items-center justify-between sticky top-2 z-20">
+                <div className="flex items-center gap-3">
+                  <img
+                    src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&w=80&q=80"
+                    alt="Student"
+                    className="h-11 w-11 rounded-full object-cover ring-2 ring-brand-100"
+                  />
+                  <div>
+                    <p className="text-xs text-slate-500">{greeting}</p>
+                    <h1 className="font-semibold text-slate-800">Rahul Verma</h1>
+                  </div>
+                </div>
+                <button className="h-11 w-11 rounded-xl bg-brand-50 text-brand-700 text-xl">🔔</button>
+              </header>
+
+              <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-3xl p-4 text-white shadow-soft animate-float">
+                <p className="text-sm opacity-90">QR Scanner</p>
+                <div className="mt-3 bg-white/15 backdrop-blur-sm rounded-2xl h-56 grid place-items-center border border-white/25 animate-pulseBorder">
+                  <div className="text-center">
+                    <div className="text-6xl">📷</div>
+                    <p className="mt-2 text-sm">Tap to scan mess QR</p>
+                  </div>
+                </div>
+                <button
+                  onClick={cycleState}
+                  className="mt-4 w-full bg-white text-brand-700 font-semibold py-2.5 rounded-xl transition hover:scale-[1.01]"
+                >
+                  Simulate Scan Result
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {statusCards.map((card) => (
+                  <article
+                    key={card.label}
+                    className={`rounded-2xl p-3 text-white shadow-soft transition-all ${card.color} ${scanState.label === card.label ? 'scale-[1.02]' : 'opacity-80'}`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h2 className="font-semibold text-sm">{card.label}</h2>
+                        <p className="text-xs opacity-95">{card.sub}</p>
+                      </div>
+                      <span className="text-2xl">{card.icon}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <section>
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Quick Actions</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  {quickActions.map((item) => (
+                    <button key={item.title} className="bg-white p-3 rounded-2xl shadow-soft text-left transition hover:-translate-y-0.5">
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl">{item.icon}</span>
+                        <div>
+                          <p className="font-semibold text-slate-800 text-sm">{item.title}</p>
+                          <p className="text-xs text-slate-500">{item.desc}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="bg-white p-4 rounded-2xl shadow-soft">
+                <h3 className="font-semibold text-slate-800 text-sm">Attendance History</h3>
+                <div className="mt-3 space-y-2">
+                  {attendanceHistory.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-slate-50 rounded-xl p-2.5">
+                      <div>
+                        <p className="text-xs font-medium text-slate-700">{item.date}</p>
+                        <p className="text-xs text-slate-500">{item.meal}</p>
+                      </div>
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${item.status === 'Present' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="bg-white p-4 rounded-2xl shadow-soft">
+                <h3 className="font-semibold text-slate-800 text-sm">Payment History</h3>
+                <div className="mt-3 space-y-2">
+                  {paymentHistory.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-slate-50 rounded-xl p-2.5">
+                      <div>
+                        <p className="text-xs font-medium text-slate-700">{item.date} • {item.method}</p>
+                        <p className="text-xs text-slate-500">{item.amount}</p>
+                      </div>
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${item.status === 'Success' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </section>
+          </main>
+        );
       }
 
-      const score = (correct * 4) - (incorrect * 1);
-
-      resultDiv.innerHTML = `
-        <h3>Score Summary</h3>
-        <p>Correct Answers: ${correct}</p>
-        <p>Incorrect Answers: ${incorrect}</p>
-        <p>Unattempted: ${unattempted}</p>
-        <p><strong>Total Score: ${score}</strong></p>
-      `;
-    };
-    reader.readAsText(fileInput.files[0]);
-  }
-</script>
-</body>
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  </body>
 </html>
